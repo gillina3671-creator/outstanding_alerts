@@ -1,5 +1,5 @@
 ﻿:root {
-  --bg: #f7f8f3;
+  --bg: #dff2df;
   --card: #ffffff;
   --text: #132016;
   --muted: #4d5b50;
@@ -9,7 +9,7 @@
 * { box-sizing: border-box; }
 body {
   margin: 0;
-  background: radial-gradient(circle at top left, #edf8ea, var(--bg));
+  background: radial-gradient(circle at top left, #f3fff0, var(--bg));
   color: var(--text);
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -47,6 +47,45 @@ th { color: var(--muted); font-weight: 600; }
   border: 1px solid #b9e6cf;
   border-radius: 999px;
   font-size: 12px;
+  padding: 4px 8px;
+}
+
+.mobile-list {
+  display: none;
+}
+
+.mobile-item {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.mobile-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mobile-grid {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: 4px 8px;
+  font-size: 13px;
+}
+
+.mobile-grid span:nth-child(odd) {
+  color: var(--muted);
+}
+
+.mobile-sent {
+  font-size: 12px;
+  color: #5f6b5f;
+  background: #e6ece6;
+  border-radius: 999px;
   padding: 4px 8px;
 }
 
@@ -96,8 +135,12 @@ input[type="text"] {
     padding: 8px;
   }
 
-  table {
-    min-width: 680px;
+  .desktop-table {
+    display: none;
+  }
+
+  .mobile-list {
+    display: block;
   }
 
   button {

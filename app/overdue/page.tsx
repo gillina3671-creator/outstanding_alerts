@@ -29,7 +29,7 @@ async function getOverdueRows(limit: number): Promise<Outstanding[]> {
   query.searchParams.set("select", "customer_name,customer_number,invoicenumber,date,duedate,overdue_days,amount,closing_balance,voucher_type");
   query.searchParams.set("bill_type", "eq.receivable");
   query.searchParams.set("overdue_days", "gt.0");
-  query.searchParams.set("order", "overdue_days.desc");
+  query.searchParams.set("order", "customer_name.asc,duedate.asc");
   query.searchParams.set("limit", String(limit));
 
   const res = await fetch(query.toString(), {
@@ -60,7 +60,7 @@ export default async function OverduePage({ searchParams }: { searchParams: { li
       </main>
     );
   }
-  const limit = Math.min(Math.max(Number(searchParams.limit || 500), 1), 5000);
+  const limit = Math.min(Math.max(Number(searchParams.limit || 5000), 1), 20000);
   const rows = await getOverdueRows(limit);
   const total = rows.reduce((acc, r) => acc + Number(r.closing_balance || 0), 0);
   const host = headers().get("host") || "localhost:3000";
@@ -68,7 +68,7 @@ export default async function OverduePage({ searchParams }: { searchParams: { li
   return (
     <main>
       <header>
-        <h1>roundalerts</h1>
+        <h1>RoundALERTS</h1>
         <p>
           Showing {rows.length} overdue rows | Total due: Rs {num(total)} | Host: {host}
         </p>
