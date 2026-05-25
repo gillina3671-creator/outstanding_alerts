@@ -17,29 +17,33 @@ async function resolveCompanyIdByAccessToken(accessToken: string): Promise<strin
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
   if (!accessToken) return null;
+  const normalizedDigits = accessToken.replace(/\D/g, "");
+  const candidates = Array.from(new Set([accessToken, normalizedDigits].filter(Boolean)));
 
-  const query = new URL(`${url}/rest/v1/tally_companies`);
-  query.searchParams.set("select", "Guid");
-  query.searchParams.set("access_token", `eq.${accessToken}`);
-  query.searchParams.set("is_active", "eq.true");
-  query.searchParams.set("limit", "1");
+  for (const candidate of candidates) {
+    const query = new URL(`${url}/rest/v1/tally_companies`);
+    query.searchParams.set("select", "Guid");
+    query.searchParams.set("access_token", `eq.${candidate}`);
+    query.searchParams.set("limit", "1");
 
-  const res = await fetch(query.toString(), {
-    headers: {
-      apikey: key,
-      Authorization: `Bearer ${key}`,
-    },
-    cache: "no-store",
-  });
+    const res = await fetch(query.toString(), {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+      },
+      cache: "no-store",
+    });
 
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(`Company token lookup failed: ${res.status} ${txt.slice(0, 300)}`);
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`Company token lookup failed: ${res.status} ${txt.slice(0, 300)}`);
+    }
+
+    const rows = (await res.json()) as Array<{ Guid?: string }>;
+    const guid = rows?.[0]?.Guid;
+    if (guid) return guid;
   }
-
-  const rows = (await res.json()) as Array<{ Guid?: string }>;
-  const guid = rows?.[0]?.Guid;
-  return guid || null;
+  return null;
 }
 
 export async function POST(req: NextRequest) {
