@@ -12,7 +12,7 @@ export default function Home() {
           <Link href="/overdue">Open Overdue Page</Link>
         </p>
         <p>
-          If token is enabled, open <code>/overdue?token=YOUR_TOKEN</code>
+          Open using a company link: <code>/overdue?access=COMPANY_TOKEN</code>
         </p>
       </div>
     </main>

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 type Row = {
+  company_id: string | null;
   customer_name: string;
   customer_number: string | number | null;
   invoicenumber: string;
@@ -26,7 +27,7 @@ function getPhoneDigits(value: string | number | null): string {
   return String(value).replace(/\D/g, "");
 }
 
-export default function OverdueClient({ rows, token }: { rows: Row[]; token: string }) {
+export default function OverdueClient({ rows, accessToken }: { rows: Row[]; accessToken: string }) {
   const [selected, setSelected] = useState<Record<number, boolean>>({});
   const [sending, setSending] = useState(false);
   const [sentRows, setSentRows] = useState<Record<number, boolean>>({});
@@ -127,7 +128,7 @@ export default function OverdueClient({ rows, token }: { rows: Row[]; token: str
       const res = await fetch("/api/send-reminders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, rows: payload }),
+        body: JSON.stringify({ accessToken, rows: payload }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "Failed to send reminders");

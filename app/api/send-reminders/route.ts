@@ -1,6 +1,7 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 type ReminderRow = {
+  company_id: string | null;
   customer_name: string;
   customer_number: string | number | null;
   invoicenumber: string;
@@ -11,16 +12,46 @@ function digits(v: string): string {
   return v.replace(/\D/g, "");
 }
 
+async function resolveCompanyIdByAccessToken(accessToken: string): Promise<string | null> {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+  if (!accessToken) return null;
+
+  const query = new URL(`${url}/rest/v1/tally_companies`);
+  query.searchParams.set("select", "Guid");
+  query.searchParams.set("access_token", `eq.${accessToken}`);
+  query.searchParams.set("is_active", "eq.true");
+  query.searchParams.set("limit", "1");
+
+  const res = await fetch(query.toString(), {
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Company token lookup failed: ${res.status} ${txt.slice(0, 300)}`);
+  }
+
+  const rows = (await res.json()) as Array<{ Guid?: string }>;
+  const guid = rows?.[0]?.Guid;
+  return guid || null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const token = String(body?.token || "");
-    const rows = (body?.rows || []) as ReminderRow[];
-
-    const requiredToken = process.env.OVERDUE_PAGE_TOKEN || "";
-    if (requiredToken && token !== requiredToken) {
+    const accessToken = String(body?.accessToken || "");
+    const companyId = await resolveCompanyIdByAccessToken(accessToken);
+    if (!companyId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const rows = ((body?.rows || []) as ReminderRow[]).filter((row) => row.company_id === companyId);
 
     const interaktKey = process.env.INTERAKT_API_KEY;
     const interaktBase = process.env.INTERAKT_BASE_URL || "https://api.interakt.ai";
@@ -52,11 +83,7 @@ export async function POST(req: NextRequest) {
         template: {
           name: templateName,
           languageCode: "en",
-          bodyValues: [
-            row.customer_name || "Customer",
-            String(row.closing_balance || "0"),
-            row.invoicenumber || "-",
-          ],
+          bodyValues: [row.customer_name || "Customer", String(row.closing_balance || "0"), row.invoicenumber || "-"],
         },
       };
 
