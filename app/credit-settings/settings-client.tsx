@@ -10,9 +10,10 @@ type Props = {
   accessToken: string;
   customers: Customer[];
   settings: Setting[];
+  initialSearch?: string;
 };
 
-export default function CreditSettingsClient({ companyId, accessToken, customers, settings }: Props) {
+export default function CreditSettingsClient({ companyId, accessToken, customers, settings, initialSearch = "" }: Props) {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
   const [rows, setRows] = useState(() => {
@@ -27,7 +28,7 @@ export default function CreditSettingsClient({ companyId, accessToken, customers
       };
     });
   });
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();

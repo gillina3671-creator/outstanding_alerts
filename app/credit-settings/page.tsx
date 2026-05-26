@@ -40,7 +40,7 @@ async function getSettings(companyId: string): Promise<Setting[]> {
   return (await res.json()) as Setting[];
 }
 
-export default async function CreditSettingsPage({ searchParams }: { searchParams: { access?: string; token?: string } }) {
+export default async function CreditSettingsPage({ searchParams }: { searchParams: { access?: string; token?: string; customer?: string } }) {
   const accessToken = searchParams.access || searchParams.token || "";
   const companyId = (await resolveCompanyIdByAccessToken(accessToken)) || (accessToken ? null : await resolveSingleCompanyId());
   if (!companyId) {
@@ -53,7 +53,13 @@ export default async function CreditSettingsPage({ searchParams }: { searchParam
         <h1>Credit Settings</h1>
         <p>Set customer credit limit and alert thresholds.</p>
       </header>
-      <CreditSettingsClient companyId={companyId} accessToken={accessToken} customers={customers} settings={settings} />
+      <CreditSettingsClient
+        companyId={companyId}
+        accessToken={accessToken}
+        customers={customers}
+        settings={settings}
+        initialSearch={searchParams.customer || ""}
+      />
     </main>
   );
 }
