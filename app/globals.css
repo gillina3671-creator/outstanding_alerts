@@ -81,6 +81,13 @@ th { color: var(--muted); font-weight: 600; }
   color: var(--muted);
 }
 
+.credit-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
 .mobile-sent {
   font-size: 12px;
   color: #5f6b5f;
@@ -141,6 +148,10 @@ input[type="text"] {
 
   .mobile-list {
     display: block;
+  }
+
+  .credit-summary-grid {
+    grid-template-columns: 1fr;
   }
 
   button {

@@ -4,27 +4,62 @@ import { resolveCompanyIdByAccessToken, resolveSingleCompanyId } from "../../lib
 type Customer = {
   ledger_name: string;
   credit_limit: string;
+  outstanding_total: string;
 };
 
 type Setting = {
   ledger_name: string;
   credit_limit: string;
   threshold_percent: string;
-  overdue_days_threshold: number;
 };
+
+type OutstandingRow = {
+  customer_name: string;
+  closing_balance: string;
+};
+
+function keyOf(value: string): string {
+  return value.trim().toLowerCase();
+}
 
 async function getCustomers(companyId: string): Promise<Customer[]> {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
-  const query = new URL(`${url}/rest/v1/tally_customers`);
-  query.searchParams.set("select", "ledger_name,credit_limit");
-  query.searchParams.set("company_id", `eq.${companyId}`);
-  query.searchParams.set("customer_type", "eq.customer");
-  query.searchParams.set("order", "ledger_name.asc");
-  const res = await fetch(query.toString(), { headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: "no-store" });
-  if (!res.ok) throw new Error(`Customer fetch failed: ${res.status}`);
-  return (await res.json()) as Customer[];
+  const headers = { apikey: key, Authorization: `Bearer ${key}` };
+
+  const customersQuery = new URL(`${url}/rest/v1/tally_customers`);
+  customersQuery.searchParams.set("select", "ledger_name,credit_limit");
+  customersQuery.searchParams.set("company_id", `eq.${companyId}`);
+  customersQuery.searchParams.set("customer_type", "eq.customer");
+  customersQuery.searchParams.set("order", "ledger_name.asc");
+
+  const outstandingQuery = new URL(`${url}/rest/v1/outstanding`);
+  outstandingQuery.searchParams.set("select", "customer_name,closing_balance");
+  outstandingQuery.searchParams.set("company_id", `eq.${companyId}`);
+  outstandingQuery.searchParams.set("bill_type", "eq.receivable");
+  outstandingQuery.searchParams.set("limit", "20000");
+
+  const [customersRes, outstandingRes] = await Promise.all([
+    fetch(customersQuery.toString(), { headers, cache: "no-store" }),
+    fetch(outstandingQuery.toString(), { headers, cache: "no-store" }),
+  ]);
+  if (!customersRes.ok) throw new Error(`Customer fetch failed: ${customersRes.status}`);
+  if (!outstandingRes.ok) throw new Error(`Outstanding fetch failed: ${outstandingRes.status}`);
+
+  const customers = (await customersRes.json()) as Array<Omit<Customer, "outstanding_total">>;
+  const outstanding = (await outstandingRes.json()) as OutstandingRow[];
+  const totals = new Map<string, number>();
+  outstanding.forEach((row) => {
+    const k = keyOf(row.customer_name || "");
+    totals.set(k, (totals.get(k) || 0) + Math.abs(Number(row.closing_balance || 0)));
+  });
+
+  return customers.map((customer) => ({
+    ...customer,
+    credit_limit: String(Math.abs(Number(customer.credit_limit || 0))),
+    outstanding_total: String(totals.get(keyOf(customer.ledger_name)) || 0),
+  }));
 }
 
 async function getSettings(companyId: string): Promise<Setting[]> {
@@ -32,7 +67,7 @@ async function getSettings(companyId: string): Promise<Setting[]> {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
   const query = new URL(`${url}/rest/v1/customer_credit_settings`);
-  query.searchParams.set("select", "ledger_name,credit_limit,threshold_percent,overdue_days_threshold");
+  query.searchParams.set("select", "ledger_name,credit_limit,threshold_percent");
   query.searchParams.set("company_id", `eq.${companyId}`);
   query.searchParams.set("is_active", "eq.true");
   const res = await fetch(query.toString(), { headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: "no-store" });

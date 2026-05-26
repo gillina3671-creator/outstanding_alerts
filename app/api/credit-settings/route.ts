@@ -10,7 +10,6 @@ type CreditSettingInput = {
   ledger_name?: string;
   credit_limit?: string | number;
   threshold_percent?: string | number;
-  overdue_days_threshold?: string | number;
 };
 
 export async function POST(req: NextRequest) {
@@ -29,7 +28,7 @@ export async function POST(req: NextRequest) {
         ledger_name: String(r.ledger_name || "").trim(),
         credit_limit: String(toNum(r.credit_limit, 0)),
         threshold_percent: String(toNum(r.threshold_percent, 90)),
-        overdue_days_threshold: Math.max(1, Math.floor(toNum(r.overdue_days_threshold, 1))),
+        overdue_days_threshold: 1,
         is_active: true,
       }))
       .filter((r) => r.ledger_name.length > 0);
