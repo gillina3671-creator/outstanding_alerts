@@ -81,6 +81,13 @@ export default async function CreditSettingsPage({ searchParams }: { searchParam
     return <main><header><h1>Unauthorized</h1><p>Invalid or missing access token.</p></header></main>;
   }
   const [customers, settings] = await Promise.all([getCustomers(companyId), getSettings(companyId)]);
+  const settingByLedger = new Map(settings.map((s) => [keyOf(s.ledger_name), s]));
+  const filteredCustomers = customers.filter((c) => {
+    const setting = settingByLedger.get(keyOf(c.ledger_name));
+    const settingLimit = Number(setting?.credit_limit || 0);
+    const customerLimit = Number(c.credit_limit || 0);
+    return settingLimit > 0 || customerLimit > 0;
+  });
   return (
     <main>
       <header>
@@ -90,7 +97,7 @@ export default async function CreditSettingsPage({ searchParams }: { searchParam
       <CreditSettingsClient
         companyId={companyId}
         accessToken={accessToken}
-        customers={customers}
+        customers={filteredCustomers}
         settings={settings}
         initialSearch={searchParams.customer || ""}
       />
