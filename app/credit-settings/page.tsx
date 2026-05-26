@@ -50,8 +50,8 @@ export default async function CreditSettingsPage({ searchParams }: { searchParam
   return (
     <main>
       <header>
-        <h1>Credit Settings</h1>
-        <p>Set customer credit limit and alert thresholds.</p>
+        <h1>Credit Limits</h1>
+        <p>Set customer alert threshold percentages.</p>
       </header>
       <CreditSettingsClient
         companyId={companyId}

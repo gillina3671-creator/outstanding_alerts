@@ -76,7 +76,7 @@ export default function CreditSettingsClient({ companyId, accessToken, customers
           <tr>
             <th>Customer</th>
             <th>Credit Limit (Rs)</th>
-            <th>Threshold %</th>
+            <th>Alert Threshold %</th>
             <th>Overdue Days</th>
           </tr>
         </thead>
@@ -85,12 +85,7 @@ export default function CreditSettingsClient({ companyId, accessToken, customers
             <tr key={row.ledger_name}>
               <td>{row.ledger_name}</td>
               <td>
-                <input
-                  type="text"
-                  value={row.credit_limit}
-                  onChange={(e) => setRows((prev) => prev.map((p) => (p.ledger_name === row.ledger_name ? { ...p, credit_limit: e.target.value } : p)))}
-                  disabled={saving}
-                />
+                {row.credit_limit}
               </td>
               <td>
                 <input
