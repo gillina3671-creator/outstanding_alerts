@@ -37,7 +37,6 @@ async function getCustomers(companyId: string): Promise<Customer[]> {
   const outstandingQuery = new URL(`${url}/rest/v1/outstanding`);
   outstandingQuery.searchParams.set("select", "customer_name,closing_balance");
   outstandingQuery.searchParams.set("company_id", `eq.${companyId}`);
-  outstandingQuery.searchParams.set("bill_type", "eq.receivable");
   outstandingQuery.searchParams.set("limit", "20000");
 
   const [customersRes, outstandingRes] = await Promise.all([
